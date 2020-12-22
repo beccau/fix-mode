@@ -27,7 +27,7 @@
 ;; In your .emacs, put:
 ;; (setq fix-mode-fix42-xml ".../FIX42.xml")
 ;; (setq fix-mode-fix44-xml ".../FIX44.xml")
-;; (setq fix-mode-fix50-xml ".../FIX44.xml")
+;; (setq fix-mode-fix50-xml ".../FIX50SP2.xml")
 ;;
 ;; Where the XML files can be found eg. at:
 ;; https://github.com/quickfix-j/quickfixj/tree/master/quickfixj-messages/quickfixj-messages-fix44/src/main/resources
@@ -127,8 +127,7 @@
   (define-key fix-mode-map (kbd "C-c C-c") 'fix-parse-line))
 
 (setq fix-mode-highlights
-      '(
-        ("\\([0-9]+\\)=" . (1 font-lock-keyword-face))
+      '(("\\([0-9]+\\)=" . (1 font-lock-keyword-face))
         ("=\\([0-9a-zA-Z\-\:\.]+\\)" . (1 font-lock-builtin-face))
         ("=" . font-lock-comment-face)))
 
