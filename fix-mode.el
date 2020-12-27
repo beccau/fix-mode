@@ -49,28 +49,29 @@
 (defconst fix-delim-char "")
 (defconst fix-delim-char-2 "|")
 
-(defun fix-read-xml (filepath)
+(defun fix-mode--read-xml (filepath)
   (with-temp-buffer
     (insert-file-contents filepath)
     (libxml-parse-xml-region (point-min) (point-max))))
 
-(defvar data-dictionary `(("FIX.4.2" . ,(fix-read-xml fix-mode-fix42-xml))
-                          ("FIX.4.4" . ,(fix-read-xml fix-mode-fix44-xml))
-                          ("FIXT.1.1" . ,(fix-read-xml fix-mode-fix50-xml))))
+(defvar fix-mode--data-dictionary `(("FIX.4.2" . ,(fix-mode--read-xml fix-mode-fix42-xml))
+                          ("FIX.4.4" . ,(fix-mode--read-xml fix-mode-fix44-xml))
+                          ("FIXT.1.1" . ,(fix-mode--read-xml fix-mode-fix50-xml))))
 
 
-(defun detect-delimiter (line)
+(defun fix-mode--detect-delimiter (line)
   (cond ((seq-contains-p line (elt fix-delim-char 0)) fix-delim-char)
         ((seq-contains-p line (elt fix-delim-char-2 0)) fix-delim-char-2)))
 
 
-(defun fix-tokenize-line (line)
-  (let ((delim (detect-delimiter line)))
+(defun fix-mode-tokenize-line (line)
+  (let ((delim (fix-mode--detect-delimiter line)))
         (if delim (split-string line delim t) ())))
 
 
-(defun split-pair (pair) (split-string pair "=" t))
-(defun tokenize (line) (mapcar 'split-pair (fix-tokenize-line line)))
+(defun fix-mode--split-pair (pair) (split-string pair "=" t))
+(defun fix-mode--tokenize (line)
+  (mapcar 'fix-mode--split-pair (fix-mode-tokenize-line line)))
 
 
 (defun fix-mode--find-in-dom (dd value attr)
@@ -101,9 +102,9 @@
 
 
 (defun fix-mode--decode-message (line)
-  (let* ((tokenized (tokenize line))
+  (let* ((tokenized (fix-mode--tokenize line))
          (version (nth 1 (car tokenized)))
-         (dd (cdr (assoc version data-dictionary)))
+         (dd (cdr (assoc version fix-mode--data-dictionary)))
          (fields-dict (dom-by-tag dd 'fields)))
     (mapcar (apply-partially 'fix-mode--format-key-val fields-dict) tokenized)))
 
