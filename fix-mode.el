@@ -73,40 +73,42 @@
 (defun tokenize (line) (mapcar 'split-pair (fix-tokenize-line line)))
 
 
-(defun find (dd value attr)
+(defun fix-mode--find-in-dom (dd value attr)
   (dom-search dd (lambda (node)
                    (equal value (dom-attr node attr)))))
 
 
-(defun enum-name-by-value (dd value)
-  (dom-attr (find dd value 'enum) 'description))
+(defun fix-mode--enum-name-by-value (dd value)
+  (dom-attr (fix-mode--find-in-dom dd value 'enum) 'description))
 
 
-(defun find-named-tag-value (dd tag value)
-  (let* ((field-node (find dd tag 'number))
+(defun fix-mode--find-named-tag-value (dd tag value)
+  (let* ((field-node (fix-mode--find-in-dom dd tag 'number))
          (tag-name (dom-attr field-node 'name))
-         (value-name (if (dom-children field-node) (enum-name-by-value field-node value) ())))
+         (value-name (if (dom-children field-node)
+                         (fix-mode--enum-name-by-value field-node value) ())))
     `(,tag-name . ,value-name)))
 
 
-(defun format-key-val (fields-dict pair)
+(defun fix-mode--format-key-val (fields-dict pair)
   (let* ((raw-tag (car pair))
          (raw-value (nth 1 pair))
-         (named-tag-value (find-named-tag-value fields-dict raw-tag raw-value))
+         (named-tag-value (fix-mode--find-named-tag-value fields-dict raw-tag raw-value))
          (named-tag (car named-tag-value))
          (named-value (cdr named-tag-value)))
-    (format "> %s[%s] = %s[%s]\n" (or named-tag "") raw-tag (or named-value "") raw-value)))
+    (format "> %s[%s] = %s[%s]\n"
+            (or named-tag "") raw-tag (or named-value "") raw-value)))
 
 
-(defun decode-message (line)
+(defun fix-mode--decode-message (line)
   (let* ((tokenized (tokenize line))
          (version (nth 1 (car tokenized)))
          (dd (cdr (assoc version data-dictionary)))
          (fields-dict (dom-by-tag dd 'fields)))
-    (mapcar (apply-partially 'format-key-val fields-dict) tokenized)))
+    (mapcar (apply-partially 'fix-mode--format-key-val fields-dict) tokenized)))
 
 
-(defun fix-parse-line ()
+(defun fix-mode--parse-line ()
   "Parse FIX message"
   (interactive)
   (let ((current-line (thing-at-point 'line t)))
@@ -116,7 +118,7 @@
         (let ((inhibit-read-only t)
           (line (string-trim-right current-line)))
           (goto-char (point-max))
-          (insert (string-join (decode-message line)))
+          (insert (string-join (fix-mode--decode-message line)))
           (insert "----------------------------------------------\n")))
   (display-buffer fix-mode-parsed-buffer))
 
@@ -124,7 +126,7 @@
 (defvar fix-mode-map nil "Keymap for `fix-mode'")
 (progn
   (setq fix-mode-map (make-sparse-keymap))
-  (define-key fix-mode-map (kbd "C-c C-c") 'fix-parse-line))
+  (define-key fix-mode-map (kbd "C-c C-c") 'fix-mode--parse-line))
 
 (setq fix-mode-highlights
       '(("\\([0-9]+\\)=" . (1 font-lock-keyword-face))
